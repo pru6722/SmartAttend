@@ -4,7 +4,7 @@ import { generateDeviceFingerprint } from '../../utils/fingerprint';
 import { FaceCameraModal } from '../../components/FaceCameraModal';
 import { QRScannerModal } from '../../components/QRScannerModal';
 import { apiClient } from '../../services/apiClient';
-import { KeyRound, ShieldAlert, CheckCircle2, Wifi, Smartphone, Camera, QrCode } from 'lucide-react';
+import { KeyRound, ShieldAlert, CheckCircle2, Wifi, Smartphone, Camera, QrCode, Hash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const JoinSession: React.FC = () => {
@@ -50,7 +50,6 @@ export const JoinSession: React.FC = () => {
     } catch (err: any) {
       const errData = err.response?.data;
 
-      // Check if Step 7 failed due to unknown device needing face verification
       if (errData?.step === 'STEP_7_DEVICE_FACE' && !faceTemplate) {
         setPendingSubmissionData(codeToSubmit);
         setShowFaceModal(true);
@@ -77,82 +76,85 @@ export const JoinSession: React.FC = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <GlassCard className="text-center">
-        <div className="w-16 h-16 rounded-2xl bg-sky-500/10 text-sky-500 border border-sky-500/20 flex items-center justify-center mx-auto mb-4">
-          <KeyRound className="w-8 h-8" />
+    <div className="max-w-md mx-auto space-y-4 px-2 sm:px-0">
+      <GlassCard className="text-center p-5 sm:p-8">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-sky-500/10 text-sky-500 border border-sky-500/20 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+          <KeyRound className="w-7 h-7 sm:w-8 sm:h-8" />
         </div>
 
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Join Active Attendance Session</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">Join Attendance Session</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
           Scan the live classroom QR Code or enter the 6-digit dynamic code shown on your teacher's screen.
         </p>
 
         {statusMessage && (
-          <div className={`mt-6 p-4 rounded-2xl border text-left flex items-start gap-3 ${
+          <div className={`mt-5 p-3.5 sm:p-4 rounded-2xl border text-left flex items-start gap-3 ${
             statusMessage.type === 'success'
               ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
               : 'bg-red-500/10 border-red-500/20 text-red-500'
           }`}>
-            {statusMessage.type === 'success' ? <CheckCircle2 className="w-6 h-6 shrink-0" /> : <ShieldAlert className="w-6 h-6 shrink-0" />}
+            {statusMessage.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <ShieldAlert className="w-5 h-5 shrink-0" />}
             <div>
-              <h4 className="font-bold text-sm">{statusMessage.title}</h4>
-              <p className="text-xs opacity-90 mt-0.5">{statusMessage.details}</p>
+              <h4 className="font-bold text-xs sm:text-sm">{statusMessage.title}</h4>
+              <p className="text-[11px] sm:text-xs opacity-90 mt-0.5">{statusMessage.details}</p>
             </div>
           </div>
         )}
 
-        <form onSubmit={(e) => handleSubmit(e)} className="mt-8 space-y-6">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
-              Attendance Session Verification
-            </label>
+        {/* Big Camera Scanner Shortcut Banner for Mobile */}
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={() => setShowQRModal(true)}
+            className="w-full py-3.5 px-4 bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white rounded-2xl shadow-lg flex items-center justify-center gap-2.5 font-bold transition text-sm"
+          >
+            <QrCode className="w-5 h-5" />
+            <span>Scan Classroom Screen QR Code</span>
+          </button>
+        </div>
 
-            {/* Input & QR Scanner Trigger side-by-side */}
-            <div className="flex gap-3 items-center">
+        <div className="relative flex py-4 items-center">
+          <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+          <span className="flex-shrink mx-4 text-xs font-semibold text-slate-400 uppercase tracking-widest">or enter code</span>
+          <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+        </div>
+
+        <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
+          <div>
+            <div className="relative">
               <input
                 type="text"
                 maxLength={6}
                 value={attendanceCode}
                 onChange={(e) => setAttendanceCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="e.g. 582731"
+                placeholder="582731"
                 required
-                className="flex-1 text-center text-3xl font-mono tracking-widest font-extrabold bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 focus:border-sky-500 rounded-2xl py-4 text-sky-600 dark:text-sky-400 placeholder-slate-400 dark:placeholder-slate-700 outline-none transition"
+                className="w-full text-center text-2xl sm:text-3xl font-mono tracking-widest font-extrabold bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 focus:border-sky-500 rounded-2xl py-3.5 text-sky-600 dark:text-sky-400 placeholder-slate-300 dark:placeholder-slate-700 outline-none transition"
               />
-
-              <button
-                type="button"
-                onClick={() => setShowQRModal(true)}
-                title="Scan QR Code with Camera"
-                className="h-16 px-5 bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white rounded-2xl shadow-lg flex flex-col items-center justify-center gap-1 shrink-0 font-bold transition"
-              >
-                <QrCode className="w-6 h-6" />
-                <span className="text-[10px] uppercase tracking-wider">Scan QR</span>
-              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-left p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-left p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-1.5">
-              <Wifi className="w-4 h-4 text-emerald-500" />
-              <span>Network Check</span>
+              <Wifi className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>Campus Wi-Fi Check</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Smartphone className="w-4 h-4 text-sky-500" />
-              <span>Device Hash</span>
+              <Smartphone className="w-4 h-4 text-sky-500 shrink-0" />
+              <span>Hardware Hash</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Camera className="w-4 h-4 text-amber-500" />
-              <span>Camera Liveness</span>
+              <Camera className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Face Liveness</span>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading || attendanceCode.length !== 6}
-            className="w-full py-4 bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-bold rounded-2xl shadow-xl shadow-sky-500/25 transition disabled:opacity-50 text-base"
+            className="w-full py-3.5 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-extrabold rounded-2xl shadow-xl transition disabled:opacity-40 text-sm"
           >
-            {loading ? 'Executing Verification Pipeline...' : 'Submit Attendance Code'}
+            {loading ? 'Verifying 7-Step Pipeline...' : 'Submit Attendance Code'}
           </button>
         </form>
       </GlassCard>
