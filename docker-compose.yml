@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: smartattend_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - smartattend_net
+
+  backend:
+    build:
+      context: ./smartattend-server
+      dockerfile: Dockerfile
+    container_name: smartattend_backend
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - MONGO_URI=mongodb://mongodb:27017/smartattend_erp
+      - JWT_SECRET=smartattend_jwt_super_secret_key_2026
+      - REFRESH_SECRET=smartattend_refresh_secret_key_2026
+    depends_on:
+      - mongodb
+    networks:
+      - smartattend_net
+
+  frontend:
+    build:
+      context: ./smartattend-client
+      dockerfile: Dockerfile
+    container_name: smartattend_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - smartattend_net
+
+volumes:
+  mongo_data:
+
+networks:
+  smartattend_net:
+    driver: bridge

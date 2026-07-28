@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const attendanceController_1 = require("../controllers/attendanceController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const roleMiddleware_1 = require("../middleware/roleMiddleware");
+const rateLimiter_1 = require("../middleware/rateLimiter");
+const router = (0, express_1.Router)();
+router.post('/mark', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('student', 'teacher', 'admin'), rateLimiter_1.attendanceSubmissionLimiter, attendanceController_1.AttendanceController.markAttendance);
+router.get('/session/:sessionId', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('teacher', 'admin'), attendanceController_1.AttendanceController.getSessionAttendance);
+exports.default = router;

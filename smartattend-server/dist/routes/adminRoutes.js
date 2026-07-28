@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const adminController_1 = require("../controllers/adminController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const roleMiddleware_1 = require("../middleware/roleMiddleware");
+const router = (0, express_1.Router)();
+// Protect all admin routes
+router.use(authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('admin'));
+router.post('/departments', adminController_1.AdminController.createDepartment);
+router.get('/departments', adminController_1.AdminController.getDepartments);
+router.post('/teachers', adminController_1.AdminController.addTeacher);
+router.put('/teachers/:id', adminController_1.AdminController.updateTeacher);
+router.get('/teachers', adminController_1.AdminController.getTeachers);
+router.post('/students', adminController_1.AdminController.addStudent);
+router.put('/students/:id', adminController_1.AdminController.updateStudent);
+router.get('/students', adminController_1.AdminController.getStudents);
+router.post('/courses', adminController_1.AdminController.createCourse);
+router.get('/courses', adminController_1.AdminController.getCourses);
+router.get('/analytics', adminController_1.AdminController.getAnalyticsOverview);
+router.get('/audit-logs', adminController_1.AdminController.getAuditLogs);
+exports.default = router;
