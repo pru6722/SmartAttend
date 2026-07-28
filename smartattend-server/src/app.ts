@@ -17,6 +17,9 @@ dotenv.config();
 
 const app = express();
 
+// Enable trust proxy for cloud deployment (Render, Vercel, Railway, AWS, Heroku)
+app.set('trust proxy', true);
+
 // Security Middlewares
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: '*', credentials: true }));

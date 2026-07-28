@@ -19,6 +19,8 @@ const teacherRoutes_1 = __importDefault(require("./routes/teacherRoutes"));
 const rateLimiter_1 = require("./middleware/rateLimiter");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+// Enable trust proxy for cloud deployment (Render, Vercel, Railway, AWS, Heroku)
+app.set('trust proxy', true);
 // Security Middlewares
 app.use((0, helmet_1.default)({ contentSecurityPolicy: false }));
 app.use((0, cors_1.default)({ origin: '*', credentials: true }));
