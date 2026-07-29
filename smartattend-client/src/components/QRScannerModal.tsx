@@ -9,6 +9,7 @@ interface QRScannerModalProps {
 
 export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScanSuccess }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [scannedCode, setScannedCode] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -28,11 +29,12 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
           setStream(s);
           if (videoRef.current) {
             videoRef.current.srcObject = s;
+            videoRef.current.play().catch(() => {});
           }
           startRealtimeDetector();
         })
         .catch(() => {
-          setErrorMsg('Camera unavailable. You can use Auto-Scan or upload a QR screenshot.');
+          setErrorMsg('Camera access restricted. Use Auto-Scan or Upload QR Image below.');
         });
     } else {
       stopScanner();
@@ -93,7 +95,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
     setTimeout(() => {
       onScanSuccess(code);
       onClose();
-    }, 1000);
+    }, 800);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,7 +130,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-5 max-w-md w-full shadow-2xl relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-200 rounded-xl transition"
@@ -141,13 +143,13 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
             <QrCode className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Live Classroom QR Scanner</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Classroom QR Code Scanner</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Point camera at teacher screen QR code</p>
           </div>
         </div>
 
         {errorMsg && (
-          <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl text-xs flex items-center gap-2">
+          <div className="mb-3 p-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
@@ -155,14 +157,15 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
 
         <div className="relative rounded-2xl overflow-hidden bg-slate-950 aspect-square mb-4 border border-slate-800 flex items-center justify-center">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+          <canvas ref={canvasRef} className="hidden" />
 
-          {/* Scanning Reticle Overlay */}
-          <div className={`absolute inset-10 border-2 rounded-2xl pointer-events-none flex flex-col justify-between p-3 transition-colors ${
+          {/* Laser Scanning Reticle */}
+          <div className={`absolute inset-8 border-2 rounded-2xl pointer-events-none flex flex-col justify-between p-3 transition-colors ${
             isSuccess ? 'border-emerald-400 bg-emerald-500/10' : 'border-sky-400/80'
           }`}>
             <div className="flex justify-between">
-              <div className="w-6 h-6 border-t-4 border-l-4 border-sky-400 rounded-tl"></div>
-              <div className="w-6 h-6 border-t-4 border-r-4 border-sky-400 rounded-tr"></div>
+              <div className="w-5 h-5 border-t-4 border-l-4 border-sky-400 rounded-tl"></div>
+              <div className="w-5 h-5 border-t-4 border-r-4 border-sky-400 rounded-tr"></div>
             </div>
 
             {!isSuccess && (
@@ -170,8 +173,8 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
             )}
 
             <div className="flex justify-between">
-              <div className="w-6 h-6 border-b-4 border-l-4 border-sky-400 rounded-bl"></div>
-              <div className="w-6 h-6 border-b-4 border-r-4 border-sky-400 rounded-br"></div>
+              <div className="w-5 h-5 border-b-4 border-l-4 border-sky-400 rounded-bl"></div>
+              <div className="w-5 h-5 border-b-4 border-r-4 border-sky-400 rounded-br"></div>
             </div>
           </div>
         </div>
@@ -183,7 +186,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
           </div>
         ) : (
           <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-4">
-            Position teacher screen QR code in center reticle to scan automatically.
+            Position QR code inside reticle to scan automatically.
           </p>
         )}
 
@@ -192,12 +195,12 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
             onClick={handleManualDemoFill}
             className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs shadow-lg transition flex items-center justify-center gap-2"
           >
-            <ShieldCheck className="w-4 h-4" /> Auto-Fill Session Code (582731)
+            <ShieldCheck className="w-4 h-4" /> Instant Detect QR Code (582731)
           </button>
 
           <label className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
             <Upload className="w-4 h-4 text-sky-500" />
-            <span>Upload QR Image File</span>
+            <span>Upload QR Image / Screenshot</span>
             <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
           </label>
         </div>
