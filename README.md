@@ -9,6 +9,13 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwind-css)
 ![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socket.io)
 
+<p align="center">
+
+🚀 **Live Demo:** https://smart-attend-nine.vercel.app/
+
+📂 **Source Code:** https://github.com/pru6722/SmartAttend-ERP
+
+</p>
 ---
 
 ## 📖 Overview
