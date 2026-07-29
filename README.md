@@ -422,30 +422,6 @@ Database
 
 ---
 
-# 📸 Screenshots
-
-```
-Add screenshots here
-
-Dashboard
-
-Teacher Portal
-
-Student Portal
-
-Admin Portal
-
-QR Attendance
-
-Grade Card
-
-Timetable
-
-Helpdesk
-```
-
----
-
 # 🔮 Future Improvements
 
 - NFC Attendance
