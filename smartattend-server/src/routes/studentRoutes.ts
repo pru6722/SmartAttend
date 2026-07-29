@@ -7,6 +7,7 @@ const router = Router();
 
 router.get('/profile', protect, authorizeRoles('student'), StudentController.getProfile);
 router.put('/profile', protect, authorizeRoles('student'), StudentController.updateProfile);
+router.put('/primary-device', protect, authorizeRoles('student'), StudentController.setPrimaryDevice);
 router.get('/history', protect, authorizeRoles('student'), StudentController.getAttendanceHistory);
 router.get('/exams', protect, authorizeRoles('student'), StudentController.getStudentExams);
 

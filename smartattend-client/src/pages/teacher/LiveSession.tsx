@@ -5,7 +5,7 @@ import { QRCode } from '../../components/QRCode';
 import { apiClient } from '../../services/apiClient';
 import { useSocket } from '../../context/SocketContext';
 import { exportToCSV, exportToExcel } from '../../utils/exporters';
-import { Clock, ShieldCheck, StopCircle, Download, UserCheck, QrCode as QrIcon, Hash } from 'lucide-react';
+import { Clock, ShieldCheck, StopCircle, Download, UserCheck, QrCode as QrIcon, Hash, Maximize2, X } from 'lucide-react';
 
 export const LiveSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +17,7 @@ export const LiveSession: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState<number>(120);
   const [isEnded, setIsEnded] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
+  const [fullscreenQR, setFullscreenQR] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -166,9 +167,14 @@ export const LiveSession: React.FC = () => {
             </div>
 
             {showQRCode ? (
-              <div className="my-1">
+              <div className="my-1 flex flex-col items-center">
                 <QRCode value={session?.attendanceCode || '582731'} size={150} />
-                <p className="text-[11px] text-slate-400 mt-2">Students scan QR to load code {session?.attendanceCode}</p>
+                <button
+                  onClick={() => setFullscreenQR(true)}
+                  className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" /> Projector View (Large QR)
+                </button>
               </div>
             ) : (
               <div>
@@ -255,7 +261,7 @@ export const LiveSession: React.FC = () => {
                 attendanceList.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-800/40 transition">
                     <td className="p-3.5 font-mono text-sky-400 font-bold">{item.rollNo}</td>
-                    <td className="p-3.5 font-semibold text-white">{item.studentName || item.studentId?.name || 'Alex Rivera'}</td>
+                    <td className="p-3.5 font-semibold text-white">{item.studentName || item.studentId?.name || 'Student'}</td>
                     <td className="p-3.5 text-slate-400">{new Date(item.timestamp || Date.now()).toLocaleTimeString()}</td>
                     <td className="p-3.5">
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -264,7 +270,7 @@ export const LiveSession: React.FC = () => {
                     </td>
                     <td className="p-3.5">
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                        {item.faceVerified ? 'Face Liveness Checked' : 'Registered Device'}
+                        {item.faceVerified ? 'Face Liveness Checked' : 'Primary Device'}
                       </span>
                     </td>
                     <td className="p-3.5">
@@ -276,13 +282,35 @@ export const LiveSession: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500">Waiting for students to enter 6-digit OTP code on their student portal...</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-500">Waiting for students to scan QR code or enter 6-digit OTP code...</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       </GlassCard>
+
+      {/* Fullscreen Classroom Projector QR Modal */}
+      {fullscreenQR && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-xl p-6">
+          <div className="bg-white dark:bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-xl w-full text-center relative shadow-2xl">
+            <button
+              onClick={() => setFullscreenQR(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 transition"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h3 className="text-xl font-bold text-white mb-2">Classroom Projector QR Code</h3>
+            <p className="text-xs text-slate-400 mb-6">{session?.subject} ({session?.department}-{session?.section})</p>
+            <div className="flex justify-center my-4">
+              <QRCode value={session?.attendanceCode || '582731'} size={280} />
+            </div>
+            <div className="mt-6 text-3xl font-mono font-extrabold text-sky-400 tracking-widest">
+              CODE: {session?.attendanceCode}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

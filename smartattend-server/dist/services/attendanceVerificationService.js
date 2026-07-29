@@ -19,18 +19,16 @@ class AttendanceVerificationService {
         // STEP 1: Verify Student Authentication & Profile Existence
         let student = await Student_1.default.findById(studentId);
         if (!student) {
-            // Fallback for Teacher / Admin test runs or unlinked accounts
             student = await Student_1.default.findOne();
         }
         if (!student) {
             return {
                 success: false,
                 step: 'STEP_1_AUTH',
-                message: 'Step 1 Failed: Student profile not found or unauthorized token. Please run database seeding.',
+                message: 'Step 1 Failed: Student profile not found or unauthorized token.',
             };
         }
         // STEP 2: Verify Student Class Enrollment
-        // Student must match session department & section
         const session = await Session_1.default.findOne({ attendanceCode: sessionCode });
         if (!session) {
             return {
@@ -95,27 +93,32 @@ class AttendanceVerificationService {
                 message: 'Attendance already marked for this session',
             };
         }
-        // STEP 7: Device Verification & Camera Face Liveness Check
+        // STEP 7: Primary Device Check vs Secondary Device Facial Liveness Check
         const deviceCheck = await fingerprintService_1.FingerprintService.verifyDevice(student._id.toString(), fingerprintHash || 'generic-device-hash', platform || 'Web', browser || 'Web Browser');
+        // Auto-set primary device if student has none set yet
+        if (!student.primaryDeviceHash) {
+            student.primaryDeviceId = deviceCheck.deviceId;
+            student.primaryDeviceHash = fingerprintHash;
+            student.primaryDeviceName = `${platform || 'Primary Mobile'} (${browser || 'Browser'})`;
+            await student.save();
+        }
+        const isPrimaryDevice = student.primaryDeviceHash === fingerprintHash;
         let faceVerified = true;
-        if (!deviceCheck.isKnownDevice) {
-            // Require Face Verification for new / unknown device
+        // Secondary / Friend device logins MUST undergo Facial Liveness Verification
+        if (!isPrimaryDevice) {
             const faceResult = faceVerificationService_1.FaceVerificationService.verifyFaceDescriptor(faceTemplate, student.faceTemplateReference);
             if (!faceResult.passed) {
                 return {
                     success: false,
                     step: 'STEP_7_DEVICE_FACE',
-                    message: `Step 7 Failed: New device detected - ${faceResult.message}`,
+                    message: `Step 7 Secondary Device Check: ${faceResult.message}`,
                 };
             }
-            // Save initial face template reference if not set
+            // Save reference face image if initial template was missing
             if (!student.faceTemplateReference && faceTemplate) {
                 student.faceTemplateReference = faceTemplate;
+                await student.save();
             }
-            if (!student.registeredDevices.includes(deviceCheck.registeredDevice._id)) {
-                student.registeredDevices.push(deviceCheck.registeredDevice._id);
-            }
-            await student.save();
         }
         // ALL PIPELINE STEPS PASSED! Create Attendance Record
         const attendanceId = `ATT-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;

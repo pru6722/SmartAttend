@@ -10,6 +10,9 @@ export interface IStudent extends Document {
   year: number;
   section: string;
   subjects: string[];
+  primaryDeviceId?: string;
+  primaryDeviceHash?: string;
+  primaryDeviceName?: string;
   registeredDevices: mongoose.Types.ObjectId[];
   faceTemplateReference?: string;
   isActivated: boolean;
@@ -28,6 +31,9 @@ const StudentSchema: Schema = new Schema(
     year: { type: Number, required: true, default: 1 },
     section: { type: String, required: true },
     subjects: [{ type: String }],
+    primaryDeviceId: { type: String, default: '' },
+    primaryDeviceHash: { type: String, default: '' },
+    primaryDeviceName: { type: String, default: '' },
     registeredDevices: [{ type: Schema.Types.ObjectId, ref: 'RegisteredDevice' }],
     faceTemplateReference: { type: String, default: '' },
     isActivated: { type: Boolean, default: true },

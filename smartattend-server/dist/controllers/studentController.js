@@ -47,6 +47,29 @@ class StudentController {
             return res.status(500).json({ success: false, message: error.message });
         }
     }
+    static async setPrimaryDevice(req, res) {
+        try {
+            const studentId = req.user?.id;
+            const { fingerprintHash, platform, browser } = req.body;
+            const student = await Student_1.default.findById(studentId);
+            if (!student) {
+                return res.status(404).json({ success: false, message: 'Student not found' });
+            }
+            const devId = `DEV-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+            student.primaryDeviceId = devId;
+            student.primaryDeviceHash = fingerprintHash;
+            student.primaryDeviceName = `${platform || 'Primary Mobile Device'} (${browser || 'Web Browser'})`;
+            await student.save();
+            return res.status(200).json({
+                success: true,
+                message: 'Primary campus device registered successfully',
+                student,
+            });
+        }
+        catch (error) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    }
     static async getAttendanceHistory(req, res) {
         try {
             const studentId = req.user?.id;
