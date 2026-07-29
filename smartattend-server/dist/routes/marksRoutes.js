@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const marksController_1 = require("../controllers/marksController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const roleMiddleware_1 = require("../middleware/roleMiddleware");
+const router = (0, express_1.Router)();
+router.post('/', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('teacher'), marksController_1.MarksController.enterMarks);
+router.get('/teacher', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('teacher'), marksController_1.MarksController.getTeacherMarks);
+router.get('/student', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('student'), marksController_1.MarksController.getStudentMarks);
+exports.default = router;

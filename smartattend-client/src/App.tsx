@@ -16,10 +16,13 @@ import { CreateSession } from './pages/teacher/CreateSession';
 import { LiveSession } from './pages/teacher/LiveSession';
 import { TeacherReports } from './pages/teacher/TeacherReports';
 import { TeacherProfile } from './pages/teacher/TeacherProfile';
+import { TeacherMarks } from './pages/teacher/TeacherMarks';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { ManageStudents } from './pages/admin/ManageStudents';
 import { ManageTeachers } from './pages/admin/ManageTeachers';
 import { ManageDepartments } from './pages/admin/ManageDepartments';
+import { ManageTimetable } from './pages/admin/ManageTimetable';
+import { ManageQueries } from './pages/admin/ManageQueries';
 import { AuditLogs } from './pages/admin/AuditLogs';
 
 const ProtectedLayout: React.FC<{ children: React.ReactNode; allowedRole?: string }> = ({ children, allowedRole }) => {
@@ -69,6 +72,7 @@ export function App() {
               <Route path="/teacher/dashboard" element={<ProtectedLayout allowedRole="teacher"><TeacherDashboard /></ProtectedLayout>} />
               <Route path="/teacher/session/create" element={<ProtectedLayout allowedRole="teacher"><CreateSession /></ProtectedLayout>} />
               <Route path="/teacher/session/live/:id" element={<ProtectedLayout allowedRole="teacher"><LiveSession /></ProtectedLayout>} />
+              <Route path="/teacher/marks" element={<ProtectedLayout allowedRole="teacher"><TeacherMarks /></ProtectedLayout>} />
               <Route path="/teacher/reports" element={<ProtectedLayout allowedRole="teacher"><TeacherReports /></ProtectedLayout>} />
               <Route path="/teacher/profile" element={<ProtectedLayout allowedRole="teacher"><TeacherProfile /></ProtectedLayout>} />
 
@@ -76,6 +80,8 @@ export function App() {
               <Route path="/admin/dashboard" element={<ProtectedLayout allowedRole="admin"><AdminDashboard /></ProtectedLayout>} />
               <Route path="/admin/students" element={<ProtectedLayout allowedRole="admin"><ManageStudents /></ProtectedLayout>} />
               <Route path="/admin/teachers" element={<ProtectedLayout allowedRole="admin"><ManageTeachers /></ProtectedLayout>} />
+              <Route path="/admin/timetables" element={<ProtectedLayout allowedRole="admin"><ManageTimetable /></ProtectedLayout>} />
+              <Route path="/admin/queries" element={<ProtectedLayout allowedRole="admin"><ManageQueries /></ProtectedLayout>} />
               <Route path="/admin/departments" element={<ProtectedLayout allowedRole="admin"><ManageDepartments /></ProtectedLayout>} />
               <Route path="/admin/audit-logs" element={<ProtectedLayout allowedRole="admin"><AuditLogs /></ProtectedLayout>} />
 

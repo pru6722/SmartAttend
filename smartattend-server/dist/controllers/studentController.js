@@ -9,6 +9,7 @@ const Student_1 = __importDefault(require("../models/Student"));
 const Attendance_1 = __importDefault(require("../models/Attendance"));
 const Session_1 = __importDefault(require("../models/Session"));
 const Exam_1 = __importDefault(require("../models/Exam"));
+const Marks_1 = __importDefault(require("../models/Marks"));
 class StudentController {
     static async getProfile(req, res) {
         try {
@@ -132,31 +133,26 @@ class StudentController {
                         passingMarks: 40,
                         status: 'upcoming',
                     },
-                    {
-                        examId: 'EXM-303',
-                        courseCode: 'CS303',
-                        subjectTitle: 'Computer Networks & Protocols',
-                        department: dept,
-                        semester: 5,
-                        examDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-                        timeSlot: '10:00 AM - 01:00 PM',
-                        roomAllocation: 'Hall 201 - Desk 19',
-                        totalMarks: 100,
-                        passingMarks: 40,
-                        score: 88,
-                        grade: 'A+',
-                        status: 'completed',
-                    },
                 ]);
                 exams = await Exam_1.default.find({ department: dept }).sort({ examDate: 1 });
+            }
+            // Calculate Real Dynamic CGPA & SGPA from published Marks
+            const studentMarks = await Marks_1.default.find({ studentId });
+            let cgpa = '0.00';
+            let sgpa = '0.00';
+            if (studentMarks.length > 0) {
+                const totalPct = studentMarks.reduce((acc, curr) => acc + (curr.marksObtained / curr.maxMarks) * 100, 0);
+                const avgPct = totalPct / studentMarks.length;
+                cgpa = (avgPct / 10).toFixed(2);
+                sgpa = (avgPct / 10).toFixed(2);
             }
             return res.status(200).json({
                 success: true,
                 exams,
                 semesterSummary: {
                     currentSemester: 5,
-                    cgpa: '9.2',
-                    sgpa: '9.4',
+                    cgpa,
+                    sgpa,
                     totalCredits: 24,
                 },
             });

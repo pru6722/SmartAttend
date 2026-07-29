@@ -11,6 +11,9 @@ import adminRoutes from './routes/adminRoutes';
 import reportRoutes from './routes/reportRoutes';
 import studentRoutes from './routes/studentRoutes';
 import teacherRoutes from './routes/teacherRoutes';
+import marksRoutes from './routes/marksRoutes';
+import timetableRoutes from './routes/timetableRoutes';
+import queryRoutes from './routes/queryRoutes';
 import { apiLimiter } from './middleware/rateLimiter';
 
 dotenv.config();
@@ -38,6 +41,9 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
+app.use('/api/v1/marks', marksRoutes);
+app.use('/api/v1/timetable', timetableRoutes);
+app.use('/api/v1/queries', queryRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', system: 'SmartAttend ERP API', timestamp: new Date() });

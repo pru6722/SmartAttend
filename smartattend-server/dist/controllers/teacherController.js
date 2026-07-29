@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TeacherController = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const User_1 = __importDefault(require("../models/User"));
+const Student_1 = __importDefault(require("../models/Student"));
 const Session_1 = __importDefault(require("../models/Session"));
 const Attendance_1 = __importDefault(require("../models/Attendance"));
 const Course_1 = __importDefault(require("../models/Course"));
@@ -17,7 +18,6 @@ class TeacherController {
             if (!teacher) {
                 return res.status(404).json({ success: false, message: 'Teacher profile not found' });
             }
-            // Stats for teacher dashboard profile
             const totalSessions = await Session_1.default.countDocuments({ teacherId: teacher._id });
             const assignedCourses = await Course_1.default.countDocuments({ assignedTeachers: teacher._id });
             const teacherSessions = await Session_1.default.find({ teacherId: teacher._id }).select('_id');
@@ -60,6 +60,23 @@ class TeacherController {
             }
             await teacher.save();
             return res.status(200).json({ success: true, message: 'Profile updated successfully', teacher });
+        }
+        catch (error) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    }
+    static async getStudentsBySection(req, res) {
+        try {
+            const { department, year, section } = req.query;
+            let query = {};
+            if (department)
+                query.department = department.toUpperCase();
+            if (year)
+                query.year = Number(year);
+            if (section)
+                query.section = section.toUpperCase();
+            const students = await Student_1.default.find(query).select('studentId rollNo name department year section').sort({ rollNo: 1 });
+            return res.status(200).json({ success: true, students });
         }
         catch (error) {
             return res.status(500).json({ success: false, message: error.message });

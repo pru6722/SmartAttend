@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
+import Student from '../models/Student';
 import Session from '../models/Session';
 import Attendance from '../models/Attendance';
 import Course from '../models/Course';
@@ -16,7 +17,6 @@ export class TeacherController {
         return res.status(404).json({ success: false, message: 'Teacher profile not found' });
       }
 
-      // Stats for teacher dashboard profile
       const totalSessions = await Session.countDocuments({ teacherId: teacher._id });
       const assignedCourses = await Course.countDocuments({ assignedTeachers: teacher._id });
       
@@ -64,6 +64,21 @@ export class TeacherController {
 
       await teacher.save();
       return res.status(200).json({ success: true, message: 'Profile updated successfully', teacher });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  public static async getStudentsBySection(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { department, year, section } = req.query;
+      let query: any = {};
+      if (department) query.department = (department as string).toUpperCase();
+      if (year) query.year = Number(year);
+      if (section) query.section = (section as string).toUpperCase();
+
+      const students = await Student.find(query).select('studentId rollNo name department year section').sort({ rollNo: 1 });
+      return res.status(200).json({ success: true, students });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
     }

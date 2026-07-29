@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const queryController_1 = require("../controllers/queryController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const roleMiddleware_1 = require("../middleware/roleMiddleware");
+const router = (0, express_1.Router)();
+router.post('/', authMiddleware_1.protect, queryController_1.QueryController.createQuery);
+router.get('/my-queries', authMiddleware_1.protect, queryController_1.QueryController.getMyQueries);
+router.get('/admin', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('admin'), queryController_1.QueryController.getAllQueries);
+router.put('/admin/:id/resolve', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('admin'), queryController_1.QueryController.resolveQuery);
+exports.default = router;

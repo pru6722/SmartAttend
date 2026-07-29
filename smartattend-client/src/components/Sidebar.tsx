@@ -13,6 +13,9 @@ import {
   Activity,
   GraduationCap,
   ShieldCheck,
+  Award,
+  Calendar,
+  HelpCircle,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -23,13 +26,14 @@ export const Sidebar: React.FC = () => {
     { to: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/student/join', label: 'Join Class', icon: CheckCircle },
     { to: '/student/history', label: 'History', icon: History },
-    { to: '/student/exams', label: 'Exams', icon: GraduationCap },
+    { to: '/student/exams', label: 'Exams & Marks', icon: GraduationCap },
     { to: '/student/profile', label: 'Profile', icon: User },
   ];
 
   const teacherLinks = [
     { to: '/teacher/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/teacher/session/create', label: 'Start Session', icon: PlusCircle },
+    { to: '/teacher/marks', label: 'Marks Entry', icon: Award },
     { to: '/teacher/reports', label: 'Reports', icon: FileText },
     { to: '/teacher/profile', label: 'Profile', icon: User },
   ];
@@ -38,6 +42,8 @@ export const Sidebar: React.FC = () => {
     { to: '/admin/dashboard', label: 'Analytics', icon: LayoutDashboard },
     { to: '/admin/students', label: 'Students', icon: Users },
     { to: '/admin/teachers', label: 'Teachers', icon: Users },
+    { to: '/admin/timetables', label: 'Timetables', icon: Calendar },
+    { to: '/admin/queries', label: 'Queries', icon: HelpCircle },
     { to: '/admin/departments', label: 'Depts', icon: Building2 },
     { to: '/admin/audit-logs', label: 'Audit', icon: Activity },
   ];
@@ -86,7 +92,7 @@ export const Sidebar: React.FC = () => {
       </aside>
 
       {/* Mobile Bottom Navigation Bar for Mobile Devices */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 flex justify-around items-center px-2 py-2 shadow-2xl transition-colors duration-300">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 flex justify-around items-center px-1 py-2 shadow-2xl transition-colors duration-300">
         {links.map((link) => {
           const Icon = link.icon;
           return (
@@ -94,14 +100,14 @@ export const Sidebar: React.FC = () => {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition ${
+                `flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl text-[10px] font-semibold transition ${
                   isActive
                     ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`
               }
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-4 h-4" />
               <span>{link.label}</span>
             </NavLink>
           );

@@ -7,5 +7,6 @@ const router = Router();
 
 router.get('/profile', protect, authorizeRoles('teacher', 'admin'), TeacherController.getProfile);
 router.put('/profile', protect, authorizeRoles('teacher', 'admin'), TeacherController.updateProfile);
+router.get('/students', protect, authorizeRoles('teacher', 'admin'), TeacherController.getStudentsBySection);
 
 export default router;

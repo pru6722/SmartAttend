@@ -7,4 +7,5 @@ const roleMiddleware_1 = require("../middleware/roleMiddleware");
 const router = (0, express_1.Router)();
 router.get('/profile', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('teacher', 'admin'), teacherController_1.TeacherController.getProfile);
 router.put('/profile', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('teacher', 'admin'), teacherController_1.TeacherController.updateProfile);
+router.get('/students', authMiddleware_1.protect, (0, roleMiddleware_1.authorizeRoles)('teacher', 'admin'), teacherController_1.TeacherController.getStudentsBySection);
 exports.default = router;
