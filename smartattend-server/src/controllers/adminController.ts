@@ -195,7 +195,7 @@ export class AdminController {
     }
   }
 
-  // Analytics Overview
+  // Analytics Overview - 100% Real-Time Dynamic DB Calculations
   public static async getAnalyticsOverview(req: AuthenticatedRequest, res: Response) {
     try {
       const totalStudents = await Student.countDocuments();
@@ -204,7 +204,6 @@ export class AdminController {
       const totalSessions = await Session.countDocuments();
       const totalAttendanceMarked = await Attendance.countDocuments();
 
-      // Students below 75% attendance
       const students = await Student.find();
       let lowAttendanceCount = 0;
 
@@ -228,6 +227,10 @@ export class AdminController {
         })
       );
 
+      const overallAttendancePct = totalSessions > 0 && totalStudents > 0
+        ? ((totalAttendanceMarked / (totalSessions * totalStudents)) * 100).toFixed(1)
+        : '0.0';
+
       return res.status(200).json({
         success: true,
         analytics: {
@@ -237,7 +240,7 @@ export class AdminController {
           totalSessions,
           totalAttendanceMarked,
           lowAttendanceCount,
-          overallAttendancePct: totalSessions > 0 ? ((totalAttendanceMarked / (totalSessions * totalStudents || 1)) * 100).toFixed(1) : '88.5',
+          overallAttendancePct: `${overallAttendancePct}%`,
           studentStats,
         },
       });

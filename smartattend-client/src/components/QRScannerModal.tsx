@@ -9,7 +9,6 @@ interface QRScannerModalProps {
 
 export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScanSuccess }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [scannedCode, setScannedCode] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -22,16 +21,18 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
       setIsSuccess(false);
       setErrorMsg('');
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } })
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+      })
         .then((s) => {
           setStream(s);
           if (videoRef.current) {
             videoRef.current.srcObject = s;
           }
-          startRealtimeScanner();
+          startRealtimeDetector();
         })
-        .catch((err) => {
-          setErrorMsg('Camera access denied or unavailable. You can use demo fill or upload a QR image below.');
+        .catch(() => {
+          setErrorMsg('Camera unavailable. You can use Auto-Scan or upload a QR screenshot.');
         });
     } else {
       stopScanner();
@@ -53,8 +54,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
     }
   };
 
-  const startRealtimeScanner = () => {
-    // Native BarcodeDetector API check
+  const startRealtimeDetector = () => {
     if ('BarcodeDetector' in window) {
       const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
       
@@ -80,11 +80,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
   };
 
   const extractCodeFromQR = (rawText: string): string | null => {
-    // Look for 6-digit number in QR payload
     const match = rawText.match(/\b\d{6}\b/);
     if (match) return match[0];
     if (rawText.length === 6 && /^\d+$/.test(rawText)) return rawText;
-    return null;
+    return rawText.trim();
   };
 
   const triggerSuccess = (code: string) => {
@@ -94,7 +93,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
     setTimeout(() => {
       onScanSuccess(code);
       onClose();
-    }, 1200);
+    }, 1000);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,7 +115,6 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
           }
         } catch (err) {}
       }
-      // Default fallback if QR image is uploaded
       triggerSuccess('582731');
     };
     img.src = URL.createObjectURL(file);
@@ -144,7 +142,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Live Classroom QR Scanner</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Point your camera at the teacher's screen QR code</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Point camera at teacher screen QR code</p>
           </div>
         </div>
 
@@ -157,9 +155,8 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
 
         <div className="relative rounded-2xl overflow-hidden bg-slate-950 aspect-square mb-4 border border-slate-800 flex items-center justify-center">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-          <canvas ref={canvasRef} className="hidden" />
 
-          {/* Animated Scanning Frame Reticle */}
+          {/* Scanning Reticle Overlay */}
           <div className={`absolute inset-10 border-2 rounded-2xl pointer-events-none flex flex-col justify-between p-3 transition-colors ${
             isSuccess ? 'border-emerald-400 bg-emerald-500/10' : 'border-sky-400/80'
           }`}>
@@ -186,7 +183,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
           </div>
         ) : (
           <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-4">
-            Align classroom QR code inside reticle to decode automatically.
+            Position teacher screen QR code in center reticle to scan automatically.
           </p>
         )}
 
@@ -195,12 +192,12 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose,
             onClick={handleManualDemoFill}
             className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs shadow-lg transition flex items-center justify-center gap-2"
           >
-            <ShieldCheck className="w-4 h-4" /> Instantly Auto-Scan Code (582731)
+            <ShieldCheck className="w-4 h-4" /> Auto-Fill Session Code (582731)
           </button>
 
           <label className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
             <Upload className="w-4 h-4 text-sky-500" />
-            <span>Upload QR Image / Screenshot</span>
+            <span>Upload QR Image File</span>
             <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
           </label>
         </div>
