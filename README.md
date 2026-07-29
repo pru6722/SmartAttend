@@ -444,7 +444,7 @@ B.Tech Computer Science & Engineering (Big Data Analytics)
 
 SRM University AP
 
-📧 Email: your-email@example.com
+📧 Email: prudhvisailingineni@example.com
 
 🔗 LinkedIn: https://linkedin.com/in/prudhvi-sai-lingineni-707349289
 
