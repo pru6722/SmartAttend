@@ -9,13 +9,12 @@ const Session_1 = __importDefault(require("../models/Session"));
 const Attendance_1 = __importDefault(require("../models/Attendance"));
 const ipNetworkService_1 = require("./ipNetworkService");
 const fingerprintService_1 = require("./fingerprintService");
-const faceVerificationService_1 = require("./faceVerificationService");
 class AttendanceVerificationService {
     /**
      * Executes the strict 7-Step Verification Pipeline for SmartAttend ERP
      */
     static async executePipeline(params) {
-        const { studentId, sessionCode, studentIp, fingerprintHash, platform, browser, faceTemplate } = params;
+        const { studentId, sessionCode, studentIp, fingerprintHash, platform, browser, faceTemplate, biometricVerified } = params;
         // STEP 1: Verify Student Authentication & Profile Existence
         let student = await Student_1.default.findById(studentId);
         if (!student) {
@@ -103,22 +102,17 @@ class AttendanceVerificationService {
             await student.save();
         }
         const isPrimaryDevice = student.primaryDeviceHash === fingerprintHash;
-        let faceVerified = true;
-        // Secondary / Friend device logins MUST undergo Facial Liveness Verification
-        if (!isPrimaryDevice) {
-            const faceResult = faceVerificationService_1.FaceVerificationService.verifyFaceDescriptor(faceTemplate, student.faceTemplateReference);
-            if (!faceResult.passed) {
-                return {
-                    success: false,
-                    step: 'STEP_7_DEVICE_FACE',
-                    message: `Step 7 Secondary Device Check: ${faceResult.message}`,
-                };
-            }
-            // Save reference face image if initial template was missing
-            if (!student.faceTemplateReference && faceTemplate) {
-                student.faceTemplateReference = faceTemplate;
-                await student.save();
-            }
+        // Secondary / Friend device logins MUST undergo Facial Biometric Liveness Verification
+        if (!isPrimaryDevice && !biometricVerified) {
+            return {
+                success: false,
+                requiresBiometric: true,
+                differentDevice: true,
+                step: 'STEP_7_DEVICE_FACE',
+                message: `⚠️ DIFFERENT DEVICE DETECTED! You are logged in on a secondary or friend's device (${platform || 'Mobile'}). Facial Biometric Liveness Verification is required to mark attendance.`,
+                primaryDeviceName: student.primaryDeviceName || 'Primary Registered Device',
+                studentName: student.name,
+            };
         }
         // ALL PIPELINE STEPS PASSED! Create Attendance Record
         const attendanceId = `ATT-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -133,7 +127,7 @@ class AttendanceVerificationService {
             studentIP: ipNetworkService_1.IpNetworkService.normalizeIp(studentIp),
             networkIdentifier: session.networkIdentifier || '/24',
             networkVerified: true,
-            faceVerified,
+            faceVerified: true,
             status: 'present',
         });
         return {

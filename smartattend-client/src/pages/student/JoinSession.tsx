@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { GlassCard } from '../../components/GlassCard';
 import { generateDeviceFingerprint } from '../../utils/fingerprint';
 import { FaceCameraModal } from '../../components/FaceCameraModal';
+import { BiometricVerificationModal } from '../../components/BiometricVerificationModal';
 import { QRScannerModal } from '../../components/QRScannerModal';
 import { apiClient } from '../../services/apiClient';
-import { KeyRound, ShieldAlert, CheckCircle2, Wifi, Smartphone, Camera, QrCode, Hash } from 'lucide-react';
+import { KeyRound, ShieldAlert, CheckCircle2, Wifi, Smartphone, Camera, QrCode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const JoinSession: React.FC = () => {
@@ -13,10 +14,17 @@ export const JoinSession: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<any>(null);
   const [showFaceModal, setShowFaceModal] = useState(false);
+  const [showBiometricModal, setShowBiometricModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
-  const [pendingSubmissionData, setPendingSubmissionData] = useState<any>(null);
+  const [pendingSubmissionCode, setPendingSubmissionCode] = useState<string>('');
+  const [primaryDeviceName, setPrimaryDeviceName] = useState<string>('Primary Device');
 
-  const handleSubmit = async (e?: React.FormEvent, faceTemplate?: string, codeOverride?: string) => {
+  const handleSubmit = async (
+    e?: React.FormEvent,
+    faceTemplate?: string,
+    codeOverride?: string,
+    biometricVerified?: boolean
+  ) => {
     if (e) e.preventDefault();
     const codeToSubmit = codeOverride || attendanceCode;
     if (!codeToSubmit || codeToSubmit.length !== 6) return;
@@ -34,6 +42,7 @@ export const JoinSession: React.FC = () => {
         platform: fp.platform,
         browser: fp.userAgent,
         faceTemplate: faceTemplate || undefined,
+        biometricVerified: Boolean(biometricVerified),
       };
 
       // 2. Submit to backend 7-Step Verification Pipeline
@@ -43,16 +52,20 @@ export const JoinSession: React.FC = () => {
         setStatusMessage({
           type: 'success',
           title: 'Attendance Verified & Marked Successfully!',
-          details: `Subject: ${res.data.data?.session?.subject || 'Class Session'} | Campus Network & Device Hash Verified.`,
+          details: `Subject: ${res.data.data?.session?.subject || 'Class Session'} | Campus Network & Biometric Identity Verified.`,
         });
         setTimeout(() => navigate('/student/dashboard'), 2500);
       }
     } catch (err: any) {
       const errData = err.response?.data;
 
-      if (errData?.step === 'STEP_7_DEVICE_FACE' && !faceTemplate) {
-        setPendingSubmissionData(codeToSubmit);
-        setShowFaceModal(true);
+      // Handle Secondary / Friend Device Detection -> Trigger Biometric Liveness Scan Modal
+      if (errData?.requiresBiometric || errData?.differentDevice || errData?.step === 'STEP_7_DEVICE_FACE') {
+        setPendingSubmissionCode(codeToSubmit);
+        if (errData?.primaryDeviceName) {
+          setPrimaryDeviceName(errData.primaryDeviceName);
+        }
+        setShowBiometricModal(true);
       } else {
         setStatusMessage({
           type: 'error',
@@ -67,7 +80,12 @@ export const JoinSession: React.FC = () => {
 
   const handleFaceVerified = (template: string) => {
     setShowFaceModal(false);
-    handleSubmit(undefined, template, pendingSubmissionData);
+    handleSubmit(undefined, template, pendingSubmissionCode);
+  };
+
+  const handleBiometricVerified = () => {
+    setShowBiometricModal(false);
+    handleSubmit(undefined, undefined, pendingSubmissionCode, true);
   };
 
   const handleQRScanned = (code: string) => {
@@ -101,7 +119,7 @@ export const JoinSession: React.FC = () => {
           </div>
         )}
 
-        {/* Big Camera Scanner Shortcut Banner for Mobile */}
+        {/* Camera QR Scanner Shortcut Banner */}
         <div className="mt-6">
           <button
             type="button"
@@ -164,6 +182,14 @@ export const JoinSession: React.FC = () => {
         isOpen={showQRModal}
         onClose={() => setShowQRModal(false)}
         onScanSuccess={handleQRScanned}
+      />
+
+      {/* Secondary / Friend Device Biometric Face Modal */}
+      <BiometricVerificationModal
+        isOpen={showBiometricModal}
+        primaryDeviceName={primaryDeviceName}
+        onClose={() => setShowBiometricModal(false)}
+        onVerified={handleBiometricVerified}
       />
 
       {/* Camera Face Modal */}

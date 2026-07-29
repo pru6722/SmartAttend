@@ -11,7 +11,7 @@ class AttendanceController {
     static async markAttendance(req, res) {
         try {
             const studentId = req.user?.id;
-            const { attendanceCode, fingerprintHash, platform, browser, faceTemplate } = req.body;
+            const { attendanceCode, fingerprintHash, platform, browser, faceTemplate, biometricVerified } = req.body;
             if (!studentId) {
                 return res.status(401).json({ success: false, message: 'Step 1 Failed: Unauthorized student token' });
             }
@@ -28,6 +28,7 @@ class AttendanceController {
                 platform,
                 browser,
                 faceTemplate,
+                biometricVerified: Boolean(biometricVerified),
             });
             if (!result.success) {
                 return res.status(400).json(result);
