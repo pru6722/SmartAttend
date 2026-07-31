@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
@@ -25,6 +25,49 @@ import { ManageTimetable } from './pages/admin/ManageTimetable';
 import { ManageQueries } from './pages/admin/ManageQueries';
 import { AuditLogs } from './pages/admin/AuditLogs';
 
+import { FirstTimeRegistrationModal } from './components/FirstTimeRegistrationModal';
+import { apiClient } from './services/apiClient';
+
+import { useLocation } from 'react-router-dom';
+
+const StudentRegistrationGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const [showRegModal, setShowRegModal] = useState(false);
+
+  const checkRegistrationStatus = () => {
+    if (user && (user.role || '').toLowerCase() === 'student') {
+      apiClient.get('/student/profile')
+        .then((res) => {
+          const student = res.data.student;
+          if (student && (!student.faceRegistered || !student.primaryDeviceRegistered)) {
+            setShowRegModal(true);
+          }
+        })
+        .catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    checkRegistrationStatus();
+  }, [user?.id, location.pathname]);
+
+  return (
+    <>
+      {children}
+      <FirstTimeRegistrationModal
+        isOpen={showRegModal}
+        studentName={user?.name}
+        onClose={() => setShowRegModal(false)}
+        onSuccess={() => {
+          setShowRegModal(false);
+          checkRegistrationStatus();
+        }}
+      />
+    </>
+  );
+};
+
 const ProtectedLayout: React.FC<{ children: React.ReactNode; allowedRole?: string }> = ({ children, allowedRole }) => {
   const { user, token } = useAuth();
 
@@ -38,7 +81,7 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode; allowedRole?: strin
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  return (
+  const content = (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <Navbar />
       <div className="flex flex-1">
@@ -49,6 +92,12 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode; allowedRole?: strin
       </div>
     </div>
   );
+
+  if (user.role === 'student') {
+    return <StudentRegistrationGuard>{content}</StudentRegistrationGuard>;
+  }
+
+  return content;
 };
 
 export function App() {

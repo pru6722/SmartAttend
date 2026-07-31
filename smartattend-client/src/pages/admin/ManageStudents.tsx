@@ -98,34 +98,53 @@ export const ManageStudents: React.FC = () => {
                 <th className="p-3.5">Name</th>
                 <th className="p-3.5">Email</th>
                 <th className="p-3.5">Department</th>
-                <th className="p-3.5">Section</th>
-                <th className="p-3.5">Status</th>
+                <th className="p-3.5">Facial Biometric</th>
+                <th className="p-3.5">Primary Device</th>
                 <th className="p-3.5 text-right rounded-r-xl">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {students.map((s) => (
-                <tr key={s._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition">
-                  <td className="p-3.5 font-mono text-sky-600 dark:text-sky-400 font-bold">{s.rollNo}</td>
-                  <td className="p-3.5 font-semibold text-slate-900 dark:text-white">{s.name}</td>
-                  <td className="p-3.5 text-slate-500 dark:text-slate-400">{s.email}</td>
-                  <td className="p-3.5 text-slate-500 dark:text-slate-400">{s.department}</td>
-                  <td className="p-3.5 text-slate-500 dark:text-slate-400">Sec {s.section} (Yr {s.year})</td>
-                  <td className="p-3.5">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                      Active
-                    </span>
-                  </td>
-                  <td className="p-3.5 text-right">
-                    <button
-                      onClick={() => handleOpenEditModal(s)}
-                      className="px-3 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-500 hover:text-white text-slate-700 dark:text-slate-300 font-semibold rounded-lg text-xs flex items-center gap-1 ml-auto transition"
-                    >
-                      <Edit className="w-3.5 h-3.5" /> Edit Student
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {students.map((s) => {
+                const hasFace = Boolean(s.faceTemplateReference && s.faceTemplateReference.length > 5);
+                const hasDevice = Boolean(s.primaryDeviceHash && s.primaryDeviceHash.length > 5);
+
+                return (
+                  <tr key={s._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition">
+                    <td className="p-3.5 font-mono text-sky-600 dark:text-sky-400 font-bold">{s.rollNo}</td>
+                    <td className="p-3.5 font-semibold text-slate-900 dark:text-white">{s.name}</td>
+                    <td className="p-3.5 text-slate-500 dark:text-slate-400">{s.email}</td>
+                    <td className="p-3.5 text-slate-500 dark:text-slate-400">{s.department} (Sec {s.section})</td>
+                    <td className="p-3.5">
+                      {hasFace ? (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                          ● Face Scan Enrolled
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                          ⚠️ Pending Scan
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3.5 text-xs text-slate-600 dark:text-slate-300">
+                      {hasDevice ? (
+                        <span className="font-semibold text-sky-500">
+                          📱 {s.primaryDeviceName || 'Registered Primary'}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 italic">No Device Registered</span>
+                      )}
+                    </td>
+                    <td className="p-3.5 text-right">
+                      <button
+                        onClick={() => handleOpenEditModal(s)}
+                        className="px-3 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-500 hover:text-white text-slate-700 dark:text-slate-300 font-semibold rounded-lg text-xs flex items-center gap-1 ml-auto transition"
+                      >
+                        <Edit className="w-3.5 h-3.5" /> Edit Student
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

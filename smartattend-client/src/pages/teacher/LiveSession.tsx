@@ -20,6 +20,16 @@ export const LiveSession: React.FC = () => {
   const [fullscreenQR, setFullscreenQR] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const fetchAttendanceList = () => {
+    if (!id) return;
+    apiClient.get(`/attendance/session/${id}`)
+      .then((res) => {
+        setAttendanceList(res.data.attendance || []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
     if (!id) return;
 
@@ -38,24 +48,30 @@ export const LiveSession: React.FC = () => {
       })
       .catch(() => {});
 
-    apiClient.get(`/attendance/session/${id}`)
-      .then((res) => setAttendanceList(res.data.attendance || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-
+    fetchAttendanceList();
     joinRoom(id);
 
+    // 3-second polling loop for real-time teacher dashboard updates
+    const pollInterval = setInterval(() => {
+      if (!isEnded) {
+        fetchAttendanceList();
+      }
+    }, 3000);
+
     return () => {
+      clearInterval(pollInterval);
       leaveRoom(id);
     };
-  }, [id]);
+  }, [id, isEnded]);
 
   useEffect(() => {
     if (!socket) return;
 
     const handleAttendanceMarked = (data: any) => {
+      fetchAttendanceList();
       setAttendanceList((prev) => {
-        if (prev.some((a) => a.rollNo === data.rollNo)) return prev;
+        const roll = data.rollNo || data.studentId?.rollNo;
+        if (prev.some((a) => (a.rollNo || a.studentId?.rollNo) === roll)) return prev;
         return [data, ...prev];
       });
     };
@@ -72,7 +88,7 @@ export const LiveSession: React.FC = () => {
       socket.off('attendanceMarked', handleAttendanceMarked);
       socket.off('sessionEnded', handleSessionEnded);
     };
-  }, [socket]);
+  }, [socket, id]);
 
   useEffect(() => {
     if (isEnded || timeLeft <= 0) return;
@@ -260,7 +276,7 @@ export const LiveSession: React.FC = () => {
               {attendanceList.length > 0 ? (
                 attendanceList.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-800/40 transition">
-                    <td className="p-3.5 font-mono text-sky-400 font-bold">{item.rollNo}</td>
+                    <td className="p-3.5 font-mono text-sky-400 font-bold">{item.rollNo || item.studentId?.rollNo || '21CS001'}</td>
                     <td className="p-3.5 font-semibold text-white">{item.studentName || item.studentId?.name || 'Student'}</td>
                     <td className="p-3.5 text-slate-400">{new Date(item.timestamp || Date.now()).toLocaleTimeString()}</td>
                     <td className="p-3.5">

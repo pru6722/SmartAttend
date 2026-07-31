@@ -28,31 +28,21 @@ class IpNetworkService {
         if (sIp === tIp || sIp === '127.0.0.1' || tIp === '127.0.0.1' || sIp === '::1' || tIp === '::1' || sIp === 'localhost' || tIp === 'localhost') {
             return true;
         }
-        // 2. Cloud Reverse Proxy Internal Networks (Render / Vercel / Railway / Heroku / Docker)
-        if (sIp.startsWith('10.') || tIp.startsWith('10.') ||
-            sIp.startsWith('172.') || tIp.startsWith('172.') ||
-            sIp.startsWith('192.168.') || tIp.startsWith('192.168.') ||
-            sIp.startsWith('127.') || tIp.startsWith('127.')) {
-            return true;
-        }
-        // 3. IPv4 Subnet Comparison (/24 or /16 campus Wi-Fi)
+        // 2. IPv4 Subnet Comparison (/24 or /16 campus Wi-Fi)
         if (sIp.includes('.') && tIp.includes('.')) {
             const sOctets = sIp.split('.');
             const tOctets = tIp.split('.');
-            // Same /24 Subnet (e.g. 157.48.200.x == 157.48.200.y)
+            // Same /24 Subnet (e.g. 192.168.1.155 == 192.168.1.100)
             if (sOctets[0] === tOctets[0] && sOctets[1] === tOctets[1] && sOctets[2] === tOctets[2]) {
                 return true;
             }
-            // Same /16 Subnet (University wide network)
-            if (sOctets[0] === tOctets[0] && sOctets[1] === tOctets[1]) {
-                return true;
-            }
+            // Check CIDR range using ip-range-check
             const teacherSubnet = `${tOctets.slice(0, 3).join('.')}.0${cidrMask}`;
             try {
                 return (0, ip_range_check_1.default)(sIp, [teacherSubnet, tIp]);
             }
             catch (err) {
-                return true; // Soft fallback for dynamic NAT networks
+                return false;
             }
         }
         // 4. IPv6 Prefix Match (first 4 segments)

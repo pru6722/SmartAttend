@@ -8,6 +8,8 @@ import { apiClient } from '../../services/apiClient';
 import { KeyRound, ShieldAlert, CheckCircle2, Wifi, Smartphone, Camera, QrCode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { FirstTimeRegistrationModal } from '../../components/FirstTimeRegistrationModal';
+
 export const JoinSession: React.FC = () => {
   const navigate = useNavigate();
   const [attendanceCode, setAttendanceCode] = useState('');
@@ -15,6 +17,7 @@ export const JoinSession: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<any>(null);
   const [showFaceModal, setShowFaceModal] = useState(false);
   const [showBiometricModal, setShowBiometricModal] = useState(false);
+  const [showFirstTimeModal, setShowFirstTimeModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [pendingSubmissionCode, setPendingSubmissionCode] = useState<string>('');
   const [primaryDeviceName, setPrimaryDeviceName] = useState<string>('Primary Device');
@@ -59,8 +62,19 @@ export const JoinSession: React.FC = () => {
     } catch (err: any) {
       const errData = err.response?.data;
 
-      // Handle Secondary / Friend Device Detection -> Trigger Biometric Liveness Scan Modal
-      if (errData?.requiresBiometric || errData?.differentDevice || errData?.step === 'STEP_7_DEVICE_FACE') {
+      // Handle missing facial registration baseline -> Auto-trigger FirstTimeRegistrationModal
+      if (errData?.requiresRegistration || errData?.step === 'STEP_7_REGISTER_FACE' || errData?.message?.includes('registration')) {
+        setPendingSubmissionCode(codeToSubmit);
+        setShowFirstTimeModal(true);
+      } else if (biometricVerified && (errData?.step === 'STEP_7_DEVICE_FACE' || errData?.message?.includes('Biometric') || errData?.message?.includes('mismatch'))) {
+        // If biometric was already attempted and failed (facial mismatch / proxy attempt), display error alert directly
+        setStatusMessage({
+          type: 'error',
+          title: 'Facial Biometric Match Failed!',
+          details: errData?.message || 'Facial biometric did not match registered student profile photo. Proxy attendance blocked.',
+        });
+      } else if (!biometricVerified && (errData?.requiresBiometric || errData?.differentDevice || errData?.step === 'STEP_7_DEVICE_FACE')) {
+        // First encounter of secondary device -> Trigger Biometric Liveness Scan Modal
         setPendingSubmissionCode(codeToSubmit);
         if (errData?.primaryDeviceName) {
           setPrimaryDeviceName(errData.primaryDeviceName);
@@ -83,9 +97,9 @@ export const JoinSession: React.FC = () => {
     handleSubmit(undefined, template, pendingSubmissionCode);
   };
 
-  const handleBiometricVerified = () => {
+  const handleBiometricVerified = (faceTemplate: string) => {
     setShowBiometricModal(false);
-    handleSubmit(undefined, undefined, pendingSubmissionCode, true);
+    handleSubmit(undefined, faceTemplate, pendingSubmissionCode, true);
   };
 
   const handleQRScanned = (code: string) => {
@@ -190,6 +204,19 @@ export const JoinSession: React.FC = () => {
         primaryDeviceName={primaryDeviceName}
         onClose={() => setShowBiometricModal(false)}
         onVerified={handleBiometricVerified}
+      />
+
+      {/* First-Time Mandatory Facial Scan Registration Modal */}
+      <FirstTimeRegistrationModal
+        isOpen={showFirstTimeModal}
+        mode="attendance"
+        onClose={() => setShowFirstTimeModal(false)}
+        onSuccess={() => {
+          setShowFirstTimeModal(false);
+          if (pendingSubmissionCode) {
+            handleSubmit(undefined, undefined, pendingSubmissionCode);
+          }
+        }}
       />
 
       {/* Camera Face Modal */}

@@ -22,9 +22,8 @@ export const StudentProfile: React.FC = () => {
       .then((res) => {
         const p = res.data.student;
         setProfile(p);
-        if (p?.faceTemplateReference) {
-          setFaceEnrolled(true);
-        }
+        const enrolled = Boolean(p?.faceRegistered || (p?.faceTemplateReference && p.faceTemplateReference.trim().length > 5));
+        setFaceEnrolled(enrolled);
       })
       .catch(() => {});
   };
@@ -60,9 +59,18 @@ export const StudentProfile: React.FC = () => {
     }
   };
 
-  const handleFaceVerified = (template: string) => {
-    setShowFaceModal(false);
-    setFaceEnrolled(true);
+  const handleFaceVerified = async (template: string) => {
+    try {
+      await apiClient.post('/student/register-face-device', {
+        faceTemplate: template,
+        registerPrimaryDevice: true,
+      });
+      setShowFaceModal(false);
+      setFaceEnrolled(true);
+      fetchProfile();
+    } catch (e) {
+      setShowFaceModal(false);
+    }
   };
 
   return (

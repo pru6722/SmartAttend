@@ -9,7 +9,9 @@ const authorizeRoles = (...roles) => {
                 message: 'Unauthorized: User authentication required',
             });
         }
-        if (!roles.includes(req.user.role)) {
+        const userRole = (req.user.role || '').toString().toLowerCase();
+        const allowedRoles = roles.map((r) => r.toString().toLowerCase());
+        if (!allowedRoles.includes(userRole)) {
             return res.status(403).json({
                 success: false,
                 message: `Forbidden: Role '${req.user.role}' does not have access to this resource`,

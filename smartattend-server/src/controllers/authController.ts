@@ -126,6 +126,10 @@ export class AuthController {
         ipAddress: req.ip || '',
       });
 
+      const faceRegistered = Boolean(userObj.faceTemplateReference && userObj.faceTemplateReference.length > 5);
+      const primaryDeviceRegistered = Boolean(userObj.primaryDeviceHash && userObj.primaryDeviceHash.length > 5);
+      const requiresRegistration = userRole === 'student' && (!faceRegistered || !primaryDeviceRegistered);
+
       return res.status(200).json({
         success: true,
         accessToken: tokens.accessToken,
@@ -139,6 +143,9 @@ export class AuthController {
           section: userObj.section || '',
           rollNo: userObj.rollNo || '',
           studentId: userObj.studentId || '',
+          faceRegistered,
+          primaryDeviceRegistered,
+          requiresRegistration,
         },
       });
     } catch (error: any) {

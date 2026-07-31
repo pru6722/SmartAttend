@@ -20,7 +20,8 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401 && !error.config._retry) {
+    const status = error.response?.status;
+    if ((status === 401 || status === 403) && !error.config._retry) {
       error.config._retry = true;
       const refreshToken = localStorage.getItem('smartattend_refresh_token');
       if (refreshToken) {

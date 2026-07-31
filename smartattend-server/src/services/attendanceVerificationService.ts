@@ -118,7 +118,19 @@ export class AttendanceVerificationService {
       };
     }
 
-    // STEP 7: Primary Device Check vs Secondary Device Facial Liveness Check
+    // Check if student has registered a facial biometric baseline template
+    if (!student.faceTemplateReference || student.faceTemplateReference.trim() === '') {
+      return {
+        success: false,
+        requiresRegistration: true,
+        requiresBiometric: true,
+        step: 'STEP_7_REGISTER_FACE',
+        message: '⚠️ Facial Scan Required: No facial biometric profile registered on your account. Please complete your facial scan to mark attendance.',
+        studentName: student.name,
+      } as any;
+    }
+
+    // STEP 7: Primary Device Check vs Secondary Device Facial Biometric Verification
     const deviceCheck = await FingerprintService.verifyDevice(
       student._id.toString(),
       fingerprintHash || 'generic-device-hash',
@@ -136,17 +148,37 @@ export class AttendanceVerificationService {
 
     const isPrimaryDevice = student.primaryDeviceHash === fingerprintHash;
 
-    // Secondary / Friend device logins MUST undergo Facial Biometric Liveness Verification
-    if (!isPrimaryDevice && !biometricVerified) {
-      return {
-        success: false,
-        requiresBiometric: true,
-        differentDevice: true,
-        step: 'STEP_7_DEVICE_FACE',
-        message: `⚠️ DIFFERENT DEVICE DETECTED! You are logged in on a secondary or friend's device (${platform || 'Mobile'}). Facial Biometric Liveness Verification is required to mark attendance.`,
-        primaryDeviceName: student.primaryDeviceName || 'Primary Registered Device',
-        studentName: student.name,
-      } as any;
+    // Secondary / Friend device logins MUST undergo Facial Biometric Verification against stored reference template
+    if (!isPrimaryDevice) {
+      if (!biometricVerified || !faceTemplate) {
+        return {
+          success: false,
+          requiresBiometric: true,
+          differentDevice: true,
+          step: 'STEP_7_DEVICE_FACE',
+          message: `⚠️ DIFFERENT DEVICE DETECTED! You are logged in on a secondary or friend's device (${platform || 'Mobile'}). Facial Biometric Verification is required to mark attendance.`,
+          primaryDeviceName: student.primaryDeviceName || 'Primary Registered Device',
+          studentName: student.name,
+        } as any;
+      }
+
+      // Verify captured face template against stored student face template with high accuracy
+      const faceResult = FaceVerificationService.verifyFaceDescriptor(
+        faceTemplate,
+        student.faceTemplateReference
+      );
+
+      if (!faceResult.passed) {
+        return {
+          success: false,
+          requiresBiometric: true,
+          differentDevice: true,
+          step: 'STEP_7_DEVICE_FACE',
+          message: `❌ Step 7 Failed: ${faceResult.message}`,
+          primaryDeviceName: student.primaryDeviceName || 'Primary Registered Device',
+          studentName: student.name,
+        } as any;
+      }
     }
 
     // ALL PIPELINE STEPS PASSED! Create Attendance Record

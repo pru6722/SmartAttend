@@ -5,6 +5,8 @@ import { GlassCard } from '../../components/GlassCard';
 import { CheckCircle, BookOpen, Award, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { FirstTimeRegistrationModal } from '../../components/FirstTimeRegistrationModal';
+
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -12,8 +14,10 @@ export const StudentDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>({ totalSessions: 0, attendedSessions: 0, percentage: '0%' });
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
 
   useEffect(() => {
+    // 1. Fetch attendance stats & history
     apiClient.get('/student/history')
       .then((res) => {
         setStats(res.data.stats || { totalSessions: 0, attendedSessions: 0, percentage: '0%' });
@@ -21,6 +25,16 @@ export const StudentDashboard: React.FC = () => {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    // 2. Fetch student profile to verify if first-time facial & device registration is complete
+    apiClient.get('/student/profile')
+      .then((res) => {
+        const student = res.data.student;
+        if (student && (!student.faceRegistered || !student.primaryDeviceRegistered)) {
+          setShowRegistrationModal(true);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -144,6 +158,14 @@ export const StudentDashboard: React.FC = () => {
           </table>
         </div>
       </GlassCard>
+
+      {/* First-Time Facial & Primary Device Registration Modal */}
+      <FirstTimeRegistrationModal
+        isOpen={showRegistrationModal}
+        studentName={user?.name}
+        onClose={() => setShowRegistrationModal(false)}
+        onSuccess={() => setShowRegistrationModal(false)}
+      />
     </div>
   );
 };
